@@ -10,27 +10,37 @@
 
 package mondrian.rolap.aggmatcher;
 
-import mondrian.olap.MondrianProperties;
-import mondrian.olap.MondrianDef;
-import mondrian.rolap.RolapAggregator;
-import mondrian.rolap.RolapStar;
-import mondrian.resource.MondrianResource;
-import mondrian.spi.Dialect;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.ref.SoftReference;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import javax.sql.DataSource;
 
+import mondrian.olap.MondrianDef;
+import mondrian.olap.MondrianProperties;
+import mondrian.resource.MondrianResource;
+import mondrian.rolap.RolapAggregator;
+import mondrian.rolap.RolapStar;
+import mondrian.rolap.sql.SqlQuery;
+import mondrian.spi.Dialect;
+
 import org.apache.log4j.Logger;
 import org.olap4j.impl.Olap4jUtil;
-
-import java.lang.ref.SoftReference;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.sql.ResultSet;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.Types;
-import java.sql.SQLException;
-import java.util.*;
 
 /**
  * Metadata gleaned from JDBC about the tables and columns in the star schema.
@@ -85,7 +95,42 @@ public class JdbcSchema {
         StdFactory() {
         }
         public JdbcSchema makeDB(DataSource dataSource) {
-            return new JdbcSchema(dataSource);
+        	JdbcSchema ret = new JdbcSchema(dataSource);
+            if (MondrianProperties.instance().JdbcSchemaLimitSearch.get()) {
+                SqlQuery sqlq = SqlQuery.newQuery(dataSource, null);
+                Dialect dialect = sqlq.getDialect();
+                String query = dialect.getCurrentSchemaQuery();
+                if (query != null) {
+                    try {
+                        Connection con = dataSource.getConnection();
+                        Statement stmt = null;
+                        ResultSet rs = null;
+                        try {
+                            stmt = con.createStatement();
+                            rs = stmt.executeQuery(query);
+                            if (rs.next()) {
+                                String schema = rs.getString(1);
+                                ret.setSchemaName(schema);
+                            } else {
+                                throw mres.Internal.ex("Unable to obtain Schema");
+                            }
+                        } finally {
+                            if (stmt != null) {
+                                stmt.close(); // will also close resultset if we get that far...
+                            }
+                            if (rs != null) {
+                            	rs.close();
+                            }
+                            con.close();
+                        }
+                    } catch (SQLException sqle) {
+                        RuntimeException re = mres.Internal.ex(query);
+                        re.initCause(sqle);
+                        throw re;
+                    }
+                }
+            }
+            return ret;
         }
         public void clearDB(JdbcSchema db) {
             // NoOp

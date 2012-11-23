@@ -968,6 +968,10 @@ public class JdbcDialectImpl implements Dialect {
             return DatabaseProduct.UNKNOWN;
         }
     }
+
+	public String getCurrentSchemaQuery() {
+    	throw new UnsupportedOperationException("This db type doesn't support current schema query");
+    }
 }
 
 // End JdbcDialectImpl.java

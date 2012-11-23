@@ -153,6 +153,11 @@ public class OracleDialect extends JdbcDialectImpl {
         }
         quoteDateLiteral(buf, value, date);
     }
+    
+    @Override
+    public String getCurrentSchemaQuery() {
+    	return "select sys_context('userenv','current_schema') x from dual";
+    }
 }
 
 // End OracleDialect.java

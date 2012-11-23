@@ -41,6 +41,11 @@ public class SybaseDialect extends JdbcDialectImpl {
     public boolean allowsFromQuery() {
         return false;
     }
+    
+    @Override
+    public String getCurrentSchemaQuery() {
+    	return "select db_name()";
+    }
 }
 
 // End SybaseDialect.java

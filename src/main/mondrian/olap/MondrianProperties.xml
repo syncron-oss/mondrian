@@ -491,6 +491,15 @@ Property that contains the URL of the catalog to be used by
         <Type>String</Type>
     </PropertyDefinition>
     <PropertyDefinition>
+        <Name>JdbcSchemaLimitSearch</Name>
+        <Path>mondrian.jdbcSchemaLimitSearch</Path>
+        <Description>
+Whether db connection should only use current schema.
+        </Description>
+        <Type>boolean</Type>
+        <Default>false</Default>
+    </PropertyDefinition>
+    <PropertyDefinition>
         <Name>EnableCacheHitCounters</Name>
         <Path>mondrian.rolap.agg.enableCacheHitCounters</Path>
         <Description>

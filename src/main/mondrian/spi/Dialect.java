@@ -912,6 +912,12 @@ public interface Dialect {
             return false;
         }
     }
+    
+    /**
+     * Returns query for default connection schema.
+     * @return
+     */
+    public String getCurrentSchemaQuery();
 }
 
 // End Dialect.java

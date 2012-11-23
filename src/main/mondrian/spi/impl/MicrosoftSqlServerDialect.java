@@ -45,6 +45,11 @@ public class MicrosoftSqlServerDialect extends JdbcDialectImpl {
         return generateInlineGeneric(
             columnNames, columnTypes, valueList, null, false);
     }
+    
+    @Override
+    public String getCurrentSchemaQuery() {
+    	return "select db_name()";
+    }
 }
 
 // End MicrosoftSqlServerDialect.java
