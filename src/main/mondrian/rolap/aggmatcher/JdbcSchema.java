@@ -117,11 +117,11 @@ public class JdbcSchema {
                                 throw mres.Internal.ex("Unable to obtain Schema");
                             }
                         } finally {
+                        	if (rs != null) {
+                             	rs.close();
+                            }
                             if (stmt != null) {
                                 stmt.close(); // will also close resultset if we get that far...
-                            }
-                            if (rs != null) {
-                            	rs.close();
                             }
                             con.close();
                         }
