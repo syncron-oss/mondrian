@@ -122,6 +122,11 @@ public class PostgreSqlDialect extends JdbcDialectImpl {
     }
     
     @Override
+    protected String deduceIdentifierQuoteString(DatabaseMetaData databaseMetaData) {
+    	return " ";
+    }
+    
+    @Override
     public String getCurrentSchemaQuery() {
     	return "select current_schema";
     }
