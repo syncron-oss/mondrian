@@ -120,7 +120,11 @@ public class PostgreSqlDialect extends JdbcDialectImpl {
         }
         return super.getType(metaData, columnIndex);
     }
-
+    
+    @Override
+    public String getCurrentSchemaQuery() {
+    	return "select current_schema";
+    }
 }
 
 // End PostgreSqlDialect.java
