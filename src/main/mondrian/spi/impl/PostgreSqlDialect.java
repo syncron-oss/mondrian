@@ -155,6 +155,11 @@ public class PostgreSqlDialect extends JdbcDialectImpl {
         quoteStringLiteral(sb, javaRegex);
         return sb.toString();
     }
+    
+    @Override
+    public String getCurrentSchemaQuery() {
+    	return "select current_schema";
+    }
 }
 
 // End PostgreSqlDialect.java
