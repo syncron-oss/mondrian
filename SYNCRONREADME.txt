@@ -11,7 +11,7 @@ To build mondrian.jar in dist directory
 
     # Currently Mondrian requires Java 6 to compile
     export JAVA_HOME=/path/to/java/6/jdk
-    and dist
+    ant dist
 
 To zip sources
 
