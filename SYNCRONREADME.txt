@@ -11,7 +11,7 @@ To build mondrian.jar in dist directory
 
     # Currently Mondrian requires Java 6 to compile
     export JAVA_HOME=/path/to/java/6/jdk
-    and dist
+    ant dist
 
 To zip sources
 
@@ -37,3 +37,4 @@ running:
     mkdir -p ~/.ivy2/local/org.olap4j/olap4j/1.0.0.445/jars ~/.ivy2/local/org.olap4j/olap4j/1.0.0.445/sources
     cp -v bppWorkspace/SyncronLib/mondrian/olap4j-1.0.1.500.jar ~/.ivy2/local/org.olap4j/olap4j/1.0.0.445/jars/olap4j-1.0.0.445.jar
     cp -v bppWorkspace/SyncronLibSource/olap4j-1.0.1.500-src.zip  ~/.ivy2/local/org.olap4j/olap4j/1.0.0.445/sources/olap4j-1.0.0.445.jar
+
