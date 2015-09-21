@@ -42,6 +42,11 @@ public class Db2Dialect extends JdbcDialectImpl {
     public boolean supportsGroupingSets() {
         return true;
     }
+    
+    @Override
+    public String getCurrentSchemaQuery() {
+    	return "SELECT CURRENT SCHEMA FROM SYSIBM.SYSDUMMY1";
+    }
 }
 
 // End Db2Dialect.java

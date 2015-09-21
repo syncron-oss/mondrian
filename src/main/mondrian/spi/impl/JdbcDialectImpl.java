@@ -1179,6 +1179,14 @@ public class JdbcDialectImpl implements Dialect {
             Util.close(resultSet, statement, null);
         }
     }
+
+	public String getCurrentSchemaQuery() {
+		final String upperProductName = productName.toUpperCase();
+		if (upperProductName.equals("H2")) {
+			return null;
+		}
+    	throw new UnsupportedOperationException("This db type doesn't support current schema query");
+    }
 }
 
 // End JdbcDialectImpl.java

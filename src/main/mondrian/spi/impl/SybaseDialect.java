@@ -53,6 +53,11 @@ public class SybaseDialect extends JdbcDialectImpl {
     protected void quoteDateLiteral(StringBuilder buf, String value, Date date)
     {
         Util.singleQuoteString(value, buf);
+	}
+    
+    @Override
+    public String getCurrentSchemaQuery() {
+    	return "select db_name()";
     }
 }
 

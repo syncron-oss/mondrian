@@ -68,6 +68,11 @@ public class MicrosoftSqlServerDialect extends JdbcDialectImpl {
         // Format 112 is equivalent to "yyyyMMdd" in Java.
         // See http://msdn.microsoft.com/en-us/library/ms187928.aspx
         buf.append("', 112)");
+	}
+    
+    @Override
+    public String getCurrentSchemaQuery() {
+    	return "select db_name()";
     }
 }
 

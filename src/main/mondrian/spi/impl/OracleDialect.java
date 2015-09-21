@@ -196,6 +196,11 @@ public class OracleDialect extends JdbcDialectImpl {
         logTypeInfo(metaData, columnIndex, type);
         return type;
     }
+    
+    @Override
+    public String getCurrentSchemaQuery() {
+    	return "select sys_context('userenv','current_schema') x from dual";
+    }
 }
 
 // End OracleDialect.java
