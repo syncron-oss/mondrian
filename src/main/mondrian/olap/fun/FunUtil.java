@@ -478,6 +478,20 @@ public class FunUtil extends Util {
             evaluator.restore(savepoint);
         }
     }
+    
+    /**
+     * Default sort method with PRE sort order
+     * @see FunUtil#sortMembers(Evaluator, Iterable, List, Calc, boolean, boolean, boolean)
+     */
+    static List<Member> sortMembers(
+            Evaluator evaluator,
+            Iterable<Member> memberIter,
+            List<Member> memberList,
+            Calc exp,
+            boolean desc,
+            boolean brk){
+		return sortMembers(evaluator, memberIter, memberList, exp, desc, brk, false);
+    }
 
     /**
      * Helper function to sort a list of members according to an expression.
@@ -498,15 +512,17 @@ public class FunUtil extends Util {
      * @param exp Expression to sort on
      * @param desc Whether to sort descending
      * @param brk Whether to break
+     * @param post if break is not set, whether sort should be in in POST order
      * @return sorted list (never null)
      */
-    static List<Member> sortMembers(
+    public static List<Member> sortMembers(
         Evaluator evaluator,
         Iterable<Member> memberIter,
         List<Member> memberList,
         Calc exp,
         boolean desc,
-        boolean brk)
+        boolean brk,
+        boolean post)
     {
         if ((memberList != null) && (memberList.size() <= 1)) {
             return memberList;
@@ -533,7 +549,7 @@ public class FunUtil extends Util {
             if (brk) {
                 comp = new BreakMemberComparator(evaluator, exp, desc);
             } else {
-                comp = new HierarchicalMemberComparator(evaluator, exp, desc);
+                comp = new HierarchicalMemberComparator(evaluator, exp, desc, post);
             }
             comp.preloadValues(mapMemberToValue);
             evaluator.getTiming().markEnd(SORT_EVAL_TIMING_NAME);
@@ -586,7 +602,7 @@ public class FunUtil extends Util {
                     evaluator, key.key, key.direction.descending);
             } else {
                 comp = new HierarchicalMemberComparator(
-                    evaluator, key.key, key.direction.descending);
+                    evaluator, key.key, key.direction.descending, false);
             }
             comp.preloadValues(memberList);
             chain.addComparator(comp.wrap(), false);
@@ -596,6 +612,23 @@ public class FunUtil extends Util {
         return memberList;
     }
 
+    
+    /**
+     * Default sort method with PRE sort order
+     * @see FunUtil#sortTuples(Evaluator, TupleIterable, TupleList, Calc, boolean, boolean, boolean, int)
+     */
+    public static TupleList sortTuples(
+            Evaluator evaluator,
+            TupleIterable tupleIterable,
+            TupleList tupleList,
+            Calc exp,
+            boolean desc,
+            boolean brk,
+            int arity)
+        {
+    	return sortTuples(evaluator, tupleIterable, tupleList, exp, desc, brk, false, arity);
+        }
+    
     /**
      * Sorts a list of Tuples by the value of an applied expression. Stable
      * sort.
@@ -614,6 +647,7 @@ public class FunUtil extends Util {
      * @param exp Expression to sort on
      * @param desc Whether to sort descending
      * @param brk Whether to break
+     * @param post if break is not set, whether sort should be in in POST order
      * @param arity Number of members in each tuple
      * @return sorted list (never null)
      */
@@ -624,6 +658,7 @@ public class FunUtil extends Util {
         Calc exp,
         boolean desc,
         boolean brk,
+        boolean post,
         int arity)
     {
         // NOTE: This method does not implement the iterable/list concept
@@ -666,7 +701,7 @@ public class FunUtil extends Util {
             }
         } else {
             comparator =
-                new HierarchicalTupleComparator(evaluator, exp, arity, desc);
+                new HierarchicalTupleComparator(evaluator, exp, arity, desc, post);
         }
 
         Arrays.sort(tuples, comparator);
@@ -776,7 +811,7 @@ public class FunUtil extends Util {
             } else {
                 TupleExpComparator comp =
                     new HierarchicalTupleComparator(
-                        evaluator, key.key, arity, key.direction.descending);
+                        evaluator, key.key, arity, key.direction.descending, false);
                 chain.addComparator(comp, false);
             }
         }
@@ -2997,7 +3032,7 @@ public class FunUtil extends Util {
         }
 
         protected final int compareHierarchicallyButSiblingsByValue(
-            Member m1, Member m2)
+            Member m1, Member m2, boolean post)
         {
             if (FunUtil.equals(m1, m2)) {
                 return 0;
@@ -3008,12 +3043,12 @@ public class FunUtil extends Util {
                 if (depth1 < depth2) {
                     m2 = m2.getParentMember();
                     if (Util.equals(m1, m2)) {
-                        return -1;
+                        return post ? 1 : -1;
                     }
                 } else if (depth1 > depth2) {
                     m1 = m1.getParentMember();
                     if (Util.equals(m1, m2)) {
-                        return 1;
+                        return post ? -1 : 1;
                     }
                 } else {
                     Member prev1 = m1, prev2 = m2;
@@ -3043,14 +3078,17 @@ public class FunUtil extends Util {
     private static class HierarchicalMemberComparator
         extends MemberComparator
     {
-        HierarchicalMemberComparator(
-            Evaluator evaluator, Calc exp, boolean desc)
+        private final boolean post;
+
+		HierarchicalMemberComparator(
+            Evaluator evaluator, Calc exp, boolean desc, boolean post)
         {
             super(evaluator, exp, desc);
+			this.post = post;
         }
 
         public int compare(Member m1, Member m2) {
-            return compareHierarchicallyButSiblingsByValue(m1, m2);
+            return compareHierarchicallyButSiblingsByValue(m1, m2, post);
         }
     }
 
@@ -3096,12 +3134,14 @@ public class FunUtil extends Util {
         extends TupleExpComparator
     {
         private final boolean desc;
+		private final boolean post;
 
         HierarchicalTupleComparator(
-            Evaluator evaluator, Calc calc, int arity, boolean desc)
+            Evaluator evaluator, Calc calc, int arity, boolean desc, boolean post)
         {
             super(evaluator, calc, arity);
             this.desc = desc;
+			this.post = post;
         }
 
         public int compare(List<Member> a1, List<Member> a2) {
@@ -3110,7 +3150,7 @@ public class FunUtil extends Util {
             try {
                 for (int i = 0; i < arity; i++) {
                     Member m1 = a1.get(i), m2 = a2.get(i);
-                    c = compareHierarchicallyButSiblingsByValue(m1, m2);
+                    c = compareHierarchicallyButSiblingsByValue(m1, m2, post);
                     if (c != 0) {
                         break;
                     }
@@ -3127,7 +3167,8 @@ public class FunUtil extends Util {
 
         protected int compareHierarchicallyButSiblingsByValue(
             Member m1,
-            Member m2)
+            Member m2,
+            boolean post)
         {
             if (FunUtil.equals(m1, m2)) {
                 return 0;
@@ -3138,12 +3179,12 @@ public class FunUtil extends Util {
                 if (depth1 < depth2) {
                     m2 = m2.getParentMember();
                     if (FunUtil.equals(m1, m2)) {
-                        return -1;
+                        return post ? 1 : -1;
                     }
                 } else if (depth1 > depth2) {
                     m1 = m1.getParentMember();
                     if (FunUtil.equals(m1, m2)) {
-                        return 1;
+                        return post? -1 : 1;
                     }
                 } else {
                     Member prev1 = m1, prev2 = m2;
@@ -3536,14 +3577,14 @@ public class FunUtil extends Util {
     /**
      * Enumeration of the flags allowed to the {@code ORDER} MDX function.
      */
-    enum Flag {
+    public enum Flag {
         ASC(false, false),
         DESC(true, false),
         BASC(false, true),
         BDESC(true, true);
 
-        final boolean descending;
-        final boolean brk;
+        public final boolean descending;
+        public final boolean brk;
 
         Flag(boolean descending, boolean brk) {
             this.descending = descending;
