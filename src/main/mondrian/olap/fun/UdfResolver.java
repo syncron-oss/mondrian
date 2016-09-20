@@ -17,6 +17,7 @@ import mondrian.mdx.ResolvedFunCall;
 import mondrian.olap.*;
 import mondrian.olap.type.*;
 import mondrian.spi.UserDefinedFunction;
+import mondrian.spi.UserDefinedFunctionWithDependency;
 
 import java.util.*;
 
@@ -136,8 +137,8 @@ public class UdfResolver implements Resolver {
         public Calc compileCall(ResolvedFunCall call, ExpCompiler compiler) {
             final Exp[] args = call.getArgs();
             Calc[] calcs = new Calc[args.length];
-            UserDefinedFunction.Argument[] expCalcs =
-                new UserDefinedFunction.Argument[args.length];
+            UserDefinedFunctionWithDependency.ArgumentWithDependency[] expCalcs =
+                new UserDefinedFunctionWithDependency.ArgumentWithDependency[args.length];
             for (int i = 0; i < args.length; i++) {
                 Exp arg = args[i];
                 final Calc calc = calcs[i] = compiler.compileAs(
@@ -175,13 +176,13 @@ public class UdfResolver implements Resolver {
     private static class ScalarCalcImpl extends GenericCalc {
         private final Calc[] calcs;
         private final UserDefinedFunction udf;
-        private final UserDefinedFunction.Argument[] args;
+        private final UserDefinedFunctionWithDependency.ArgumentWithDependency[] args;
 
         public ScalarCalcImpl(
             ResolvedFunCall call,
             Calc[] calcs,
             UserDefinedFunction udf,
-            UserDefinedFunction.Argument[] args)
+            UserDefinedFunctionWithDependency.ArgumentWithDependency[] args)
         {
             super(call);
             this.calcs = calcs;
@@ -204,8 +205,7 @@ public class UdfResolver implements Resolver {
         }
 
         public boolean dependsOn(Hierarchy hierarchy) {
-            // Be pessimistic. This effectively disables expression caching.
-            return true;
+        	return getDependency(hierarchy, udf, args);
         }
     }
 
@@ -214,13 +214,13 @@ public class UdfResolver implements Resolver {
      */
     private static class ListCalcImpl extends AbstractListCalc {
         private final UserDefinedFunction udf;
-        private final UserDefinedFunction.Argument[] args;
+        private final UserDefinedFunctionWithDependency.ArgumentWithDependency[] args;
 
         public ListCalcImpl(
             ResolvedFunCall call,
             Calc[] calcs,
             UserDefinedFunction udf,
-            UserDefinedFunction.Argument[] args)
+            UserDefinedFunctionWithDependency.ArgumentWithDependency[] args)
         {
             super(call, calcs);
             this.udf = udf;
@@ -261,22 +261,32 @@ public class UdfResolver implements Resolver {
 
         @Override
         public boolean dependsOn(Hierarchy hierarchy) {
-            // Be pessimistic. This effectively disables expression caching.
-            return true;
+        	return getDependency(hierarchy, udf, args);
         }
     }
-
+    
+	private static boolean getDependency(Hierarchy hierarchy, UserDefinedFunction udf,
+			UserDefinedFunctionWithDependency.ArgumentWithDependency[] args) {
+		if (udf instanceof UserDefinedFunctionWithDependency) {
+			UserDefinedFunctionWithDependency udfWithDependency = (UserDefinedFunctionWithDependency) udf;
+			return udfWithDependency.dependsOn(hierarchy, args);
+		} else {
+			// Be pessimistic. This effectively disables expression caching.
+			return true;
+		}
+	}
+    
     /**
      * Wrapper around a {@link Calc} to make it appear as an {@link Exp}.
      * Only the {@link #evaluate(mondrian.olap.Evaluator)}
      * and {@link #evaluateScalar(mondrian.olap.Evaluator)} methods are
      * supported.
      */
-    private static class CalcExp implements UserDefinedFunction.Argument {
-        private final Calc calc;
-        private final Calc scalarCalc;
-        private final IterCalc iterCalc;
-        private final ListCalc listCalc;
+    private static class CalcExp implements UserDefinedFunctionWithDependency.ArgumentWithDependency {
+        protected final Calc calc;
+        protected final Calc scalarCalc;
+        protected final IterCalc iterCalc;
+        protected final ListCalc listCalc;
 
         /**
          * Creates a CalcExp.
@@ -361,6 +371,26 @@ public class UdfResolver implements Resolver {
                 return TupleCollections.asMemberArrayIterable(tupleIterable);
             }
         }
+        
+		@Override
+		public boolean dependsOn(Hierarchy hierarchy) {
+			return calc.dependsOn(hierarchy);
+		}
+
+		@Override
+		public boolean scalarDependsOn(Hierarchy hierarchy) {
+			return scalarCalc.dependsOn(hierarchy);
+		}
+
+		@Override
+		public boolean listDependsOn(Hierarchy hierarchy) {
+			return listCalc.dependsOn(hierarchy);
+		}
+
+		@Override
+		public boolean iterableDependsOn(Hierarchy hierarchy) {
+			return iterCalc.dependsOn(hierarchy);
+		}
     }
 
     /**
