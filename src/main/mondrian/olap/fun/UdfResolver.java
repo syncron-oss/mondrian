@@ -371,23 +371,19 @@ public class UdfResolver implements Resolver {
                 return TupleCollections.asMemberArrayIterable(tupleIterable);
             }
         }
-        
-		@Override
+
 		public boolean dependsOn(Hierarchy hierarchy) {
 			return calc.dependsOn(hierarchy);
 		}
 
-		@Override
 		public boolean scalarDependsOn(Hierarchy hierarchy) {
 			return scalarCalc.dependsOn(hierarchy);
 		}
 
-		@Override
 		public boolean listDependsOn(Hierarchy hierarchy) {
 			return listCalc.dependsOn(hierarchy);
 		}
 
-		@Override
 		public boolean iterableDependsOn(Hierarchy hierarchy) {
 			return iterCalc.dependsOn(hierarchy);
 		}
