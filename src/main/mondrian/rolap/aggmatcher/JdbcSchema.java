@@ -1229,7 +1229,7 @@ public class JdbcSchema {
      * Gets a table by name.
      */
     public synchronized Table getTable(final String tableName) {
-        return getTablesMap().get(tableName);
+        return getTablesMap().get(normalizeTableName(tableName));
     }
 
     public String toString() {
@@ -1328,7 +1328,7 @@ public class JdbcSchema {
      * @throws SQLException
      */
     protected void addTable(final ResultSet rs) throws SQLException {
-        String name = rs.getString(3);
+        String name = normalizeTableName(rs.getString(3));
         String tableType = rs.getString(4);
         Table table = new Table(name, tableType);
 
@@ -1342,6 +1342,10 @@ public class JdbcSchema {
     public static synchronized void clearAllDBs() {
         factory = null;
         makeFactory();
+    }
+
+    private String normalizeTableName(String tableName) {
+    	return tableName.toLowerCase();
     }
 }
 
