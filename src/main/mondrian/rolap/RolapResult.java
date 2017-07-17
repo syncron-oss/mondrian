@@ -1572,7 +1572,11 @@ public class RolapResult extends ResultBase {
         }
 
         private void mergeTupleIter(TupleCursor cursor) {
+            int currentIteration = 0;
+            Execution execution = Locus.peek().execution;
             while (cursor.forward()) {
+                CancellationChecker.checkCancelOrTimeout(
+                    currentIteration++, execution);
                 mergeTuple(cursor);
             }
         }
