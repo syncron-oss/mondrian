@@ -17,6 +17,7 @@ import mondrian.rolap.agg.AggregationManager;
 import mondrian.rolap.agg.CellRequest;
 import mondrian.rolap.aggmatcher.AggStar;
 import mondrian.rolap.sql.*;
+import mondrian.server.Execution;
 import mondrian.server.Locus;
 import mondrian.server.monitor.SqlStatementEvent;
 import mondrian.spi.Dialect;
@@ -333,23 +334,18 @@ class SqlMemberSource
             }
 
             int limit = MondrianProperties.instance().ResultLimit.get();
-            final int checkCancelPeriod =
-                MondrianProperties.instance().CancelPhaseInterval.get();
             ResultSet resultSet = stmt.getResultSet();
+            Execution execution = Locus.peek().execution;
             while (resultSet.next()) {
-                ++stmt.rowCount;
+                // Check if the MDX query was canceled.
+                CancellationChecker.checkCancelOrTimeout(
+                    ++stmt.rowCount, execution);
+
                 if (limit > 0 && limit < stmt.rowCount) {
                     // result limit exceeded, throw an exception
                     throw stmt.handle(
                         MondrianResource.instance().MemberFetchLimitExceeded.ex(
                             limit));
-                }
-
-                // Check if the MDX query was canceled.
-                if (checkCancelPeriod > 0
-                    && stmt.rowCount % checkCancelPeriod == 0)
-                {
-                    Locus.peek().execution.checkCancelOrTimeout();
                 }
 
                 int column = 0;
@@ -962,26 +958,21 @@ RME is this right
                 -1, -1, null);
         try {
             int limit = MondrianProperties.instance().ResultLimit.get();
-            final int checkCancelPeriod =
-                MondrianProperties.instance().CancelPhaseInterval.get();
             boolean checkCacheStatus = true;
 
             final List<SqlStatement.Accessor> accessors = stmt.getAccessors();
             ResultSet resultSet = stmt.getResultSet();
             RolapMember parentMember2 = RolapUtil.strip(parentMember);
+            Execution execution = Locus.peek().execution;
             while (resultSet.next()) {
-                ++stmt.rowCount;
+                // Check if the MDX query was canceled.
+                CancellationChecker.checkCancelOrTimeout(
+                    ++stmt.rowCount, execution);
+
                 if (limit > 0 && limit < stmt.rowCount) {
                     // result limit exceeded, throw an exception
                     throw MondrianResource.instance().MemberFetchLimitExceeded
                         .ex(limit);
-                }
-
-                // Check if the MDX query was canceled.
-                if (checkCancelPeriod > 0
-                    && stmt.rowCount % checkCancelPeriod == 0)
-                {
-                    Locus.peek().execution.checkCancelOrTimeout();
                 }
 
                 Object value = accessors.get(0).get();
