@@ -1328,11 +1328,11 @@ public class JdbcSchema {
      * @throws SQLException
      */
     protected void addTable(final ResultSet rs) throws SQLException {
-        String name = normalizeTableName(rs.getString(3));
+        String name = rs.getString(3);
         String tableType = rs.getString(4);
         Table table = new Table(name, tableType);
 
-        tables.put(table.getName(), table);
+        tables.put(normalizeTableName(table.getName()), table);
     }
 
     private SortedMap<String, Table> getTablesMap() {
