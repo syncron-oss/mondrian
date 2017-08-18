@@ -128,7 +128,7 @@ public class PostgreSqlDialect extends JdbcDialectImpl {
     
     @Override
     public String getCurrentSchemaQuery() {
-    	return "select current_schema";
+    	return "select current_schema()";
     }
 }
 
